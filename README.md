@@ -65,31 +65,60 @@ b)Daily read/redirection of url=3860*60*60*24=0.33billion
 c)Cache memory=0.2*0.33*100bytes=6.6GB
 d)Least recently used(LRU) caching policy can be used.
 
-#Load balancer can also be used to make system more scalable and available.
+#Load balancer can also be used to make system more scalable and available.Round robin algorithm can be used.
 
 #A seperate cleanup cron service would also run to remove the expired links when the expired time is reached.
 
 
 
-#System APIs:
+#System APIs(psuedo code):
 
 a)createURL(user_id,original_url,user_name(optional),expiration_date(optional)) : creates a shortened url ->add to db->returns it.
 If expiration date is present , we set the expiration_date to given value else the default value of the expiration date is created_date+10 years.
 
+current_date=Date()
+if(isEmpty(expiration_date)){
+	expiration_date=current_date+10 years
+}
+var short_url=createShortUrl(original_url)
+addEntryToDb(user_id,original_url,short_url,created_date,expiration_date)
+return short_url
+
 
 
 b)updateURL(user_id,original_url,user_name(optional),expiration_date(optional)) : creates a shortened url ->update the db->returns it.
+
+current_date=Date()
+if(isEmpty(expiration_date)){
+	expiration_date=current_date+10 years
+}
+updateEntryToDb(user_id,original_url,created_date,expiration_date)
 
 
 
 c)getOriginalURL(user_id,short_url):
 validates the user access to the short url->fetch the long version of the url from db->checks for expiration->redircts to the original long url.
 
+currentDate=Date()
+if(isUserHasAccessToUrl(user_id,short_url)){
+	var urlObject=getURLObjectLFromDB(user_id,short_url)
+	if(urlObject.expiration_date<currentDate){
+	return error message
+	}
+	else{
+	redirect(urlObject.original_url)
+	}
+}
+
 
 
 d)expireURL(user_id,short_url):
 validates the user access to the short url->remove the url from db.
 
+currentDate=Date()
+if(isUserHasAccessToUrl(user_id,short_url)){
+	deleteURLObject(user_id,short_url)
+}
 
 e)signup(email,password,name):
 Registers the user
@@ -97,6 +126,20 @@ Registers the user
 
 f)login(email,password):
 authenticates the user->returns user object.
+
+
+#Function Description:
+
+a)createShortUrl(original_url) => returns a short url from original url using the algorithm defined above.
+
+b)addEntryToDb(user_id,original_url,short_url,created_date,expiration_date)=>adds a new url object to URL document in db.
+
+c)updateEntryToDb(user_id,original_url,created_date,expiration_date)=>updates the url object present in URL document in db. 
+
+d)getURLObjectLFromDB(user_id,short_url)=>fetch the url Object from URL document and returns it.
+
+e)redirect(original_url)=>redirects to a given url.
+
 
 
 
